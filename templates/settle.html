@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>割り勘精算アプリ</title>
+</head>
+<body>
+    <h1>割り勘精算（4人固定）</h1>
+
+    <form method="POST">
+        <label>成績倍率（レート）を選択：
+            <select name="rate" required>
+                <option value="0.1" {% if rate == 0.1 %}selected{% endif %}>10倍（0.1）</option>
+                <option value="0.3" {% if rate == 0.3 %}selected{% endif %}>30倍（0.3）</option>
+                <option value="0.5" {% if rate == 0.5 %}selected{% endif %}>50倍（0.5）</option>
+            </select>
+        </label>
+        <br><br>
+
+        {% for i in range(1, 5) %}
+        {% set p = people[i-1] if people|length >= i else {} %}
+        <div>
+            <label>名前{{ i }}:
+                <input type="text" name="name{{ i }}" required value="{{ p.name if p.name is defined }}">
+            </label>
+            <label>支払額（円・半角数字）:
+                <input type="number" name="pay{{ i }}" step="0.01" required pattern="[0-9]+(\.[0-9]{1,2})?" value="{{ p.pay if p.pay is defined }}">
+            </label>
+            <label>成績（±整数・小数）:
+                <input type="number" name="score{{ i }}" step="0.01" required value="{{ p.score if p.score is defined }}">
+            </label>
+        </div>
+        <br>
+        {% endfor %}
+
+        <input type="submit" value="精算計算">
+    </form>
+
+    {% if error %}
+        <p style="color:red; font-weight:bold;">⚠️ エラー: {{ error }}</p>
+    {% endif %}
+
+    {% if people %}
+        <h2>各人の入力と損益:</h2>
+        <ul>
+        {% for p in people %}
+            <li>{{ p.name }}：支払 {{ p.pay }} 円、成績 {{ p.score }}、損益 {{ p.profit }} 円 → 実質負担 {{ p.adjusted }} 円</li>
+        {% endfor %}
+        </ul>
+        <h3>支払合計：{{ total_paid }} 円</h3>
+        <h3>成績反映後の合計：{{ total_adjusted }} 円（→ 1人あたり {{ total_adjusted / 4 }} 円）</h3>
+    {% endif %}
+
+    {% if results %}
+        <h2>送金リスト:</h2>
+        <ul>
+        {% for r in results %}
+            <li>{{ r }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
