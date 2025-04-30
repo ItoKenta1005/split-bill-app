@@ -3,61 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <title>割り勘精算アプリ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>割り勘精算（4人固定）</h1>
+<body class="bg-light">
+    <div class="container py-4">
+        <h1 class="mb-4 text-center">割り勘精算（4人固定）</h1>
 
-    <form method="POST">
-        <label>成績倍率（レート）を選択：
-            <select name="rate" required>
-                <option value="0.1" {% if rate == 0.1 %}selected{% endif %}>10倍（0.1）</option>
-                <option value="0.3" {% if rate == 0.3 %}selected{% endif %}>30倍（0.3）</option>
-                <option value="0.5" {% if rate == 0.5 %}selected{% endif %}>50倍（0.5）</option>
-            </select>
-        </label>
-        <br><br>
+        <form method="POST" class="mb-4">
+            <div class="mb-3">
+                <label class="form-label">成績倍率（レート）を選択：</label>
+                <select name="rate" class="form-select" required>
+                    <option value="0.1" {% if rate == 0.1 %}selected{% endif %}>10倍（0.1）</option>
+                    <option value="0.3" {% if rate == 0.3 %}selected{% endif %}>30倍（0.3）</option>
+                    <option value="0.5" {% if rate == 0.5 %}selected{% endif %}>50倍（0.5）</option>
+                </select>
+            </div>
 
-        {% for i in range(1, 5) %}
-        {% set p = people[i-1] if people|length >= i else {} %}
-        <div>
-            <label>名前{{ i }}:
-                <input type="text" name="name{{ i }}" required value="{{ p.name if p.name is defined }}">
-            </label>
-            <label>支払額（円・半角数字）:
-                <input type="number" name="pay{{ i }}" step="0.01" required pattern="[0-9]+(\.[0-9]{1,2})?" value="{{ p.pay if p.pay is defined }}">
-            </label>
-            <label>成績（±整数・小数）:
-                <input type="number" name="score{{ i }}" step="0.01" required value="{{ p.score if p.score is defined }}">
-            </label>
+            {% for i in range(1, 5) %}
+            {% set p = people[i-1] if people|length >= i else {} %}
+            <div class="row g-2 mb-3 align-items-center">
+                <div class="col-sm-4">
+                    <input type="text" name="name{{ i }}" class="form-control" placeholder="名前{{ i }}" required value="{{ p.name if p.name is defined }}">
+                </div>
+                <div class="col-sm-4">
+                    <input type="number" name="pay{{ i }}" class="form-control" placeholder="支払額" step="0.01" required value="{{ p.pay if p.pay is defined }}">
+                </div>
+                <div class="col-sm-4">
+                    <input type="number" name="score{{ i }}" class="form-control" placeholder="成績（±整数）" step="0.01" required value="{{ p.score if p.score is defined }}">
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">精算計算</button>
+            </div>
+        </form>
+
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            ⚠️ エラー: {{ error }}
         </div>
-        <br>
-        {% endfor %}
+        {% endif %}
 
-        <input type="submit" value="精算計算">
-    </form>
+        {% if people %}
+        <div class="card mb-3">
+            <div class="card-header">各人の入力と損益</div>
+            <ul class="list-group list-group-flush">
+                {% for p in people %}
+                <li class="list-group-item">
+                    {{ p.name }}：支払 {{ p.pay }} 円、成績 {{ p.score }}、損益 {{ p.profit }} 円 → 実質負担 {{ p.adjusted }} 円
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
 
-    {% if error %}
-        <p style="color:red; font-weight:bold;">⚠️ エラー: {{ error }}</p>
-    {% endif %}
+        <div class="mb-3">
+            <strong>支払合計：</strong>{{ total_paid }} 円<br>
+            <strong>成績反映後の合計：</strong>{{ total_adjusted }} 円（1人あたり {{ total_adjusted / 4 }} 円）
+        </div>
+        {% endif %}
 
-    {% if people %}
-        <h2>各人の入力と損益:</h2>
-        <ul>
-        {% for p in people %}
-            <li>{{ p.name }}：支払 {{ p.pay }} 円、成績 {{ p.score }}、損益 {{ p.profit }} 円 → 実質負担 {{ p.adjusted }} 円</li>
-        {% endfor %}
-        </ul>
-        <h3>支払合計：{{ total_paid }} 円</h3>
-        <h3>成績反映後の合計：{{ total_adjusted }} 円（→ 1人あたり {{ total_adjusted / 4 }} 円）</h3>
-    {% endif %}
-
-    {% if results %}
-        <h2>送金リスト:</h2>
-        <ul>
-        {% for r in results %}
-            <li>{{ r }}</li>
-        {% endfor %}
-        </ul>
-    {% endif %}
+        {% if results %}
+        <div class="card">
+            <div class="card-header">送金リスト</div>
+            <ul class="list-group list-group-flush">
+                {% for r in results %}
+                <li class="list-group-item">{{ r }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
 </body>
 </html>
